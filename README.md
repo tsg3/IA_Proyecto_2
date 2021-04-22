@@ -2,7 +2,7 @@
 
 ## Descripción
 
-Sistema experto en teoría musical básica. El sistema responde a solicitudes de información muy básicas sobre teoría musical básica, como ppor ejemplo intervalos, escalas mayores y acordes. El sistema está basado en reglas para el framework CLIPS.
+Sistema experto en teoría musical básica. El sistema responde a solicitudes de información muy básicas sobre teoría musical básica, como por ejemplo intervalos, escalas mayores y acordes. El sistema está basado en reglas para el framework CLIPS.
 
 ## Requerimientos
 
