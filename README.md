@@ -14,7 +14,7 @@ Sistema experto en teoría musical básica. El sistema responde a solicitudes de
 - Descomprimir el paquete descargado.
 - Una vez situado en la carpeta descomprimida, ejecutar el siguiente comando:
 
-    <ruta al ejecutable de clips> -f2 batch.clp
+    {ruta al ejecutable de clips} -f2 batch.clp
 
 - En caso de añadir del ejecutable de CLIPS a la variable PATH de Windows o en el directorio "/usr/bin" de Linux, se puede usar el siguiente comando:
 
