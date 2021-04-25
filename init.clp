@@ -5,7 +5,7 @@
     (note do sostenido -8)
     (note re bemol -8)
     (note re natural -7)
-    (note note re sostenido -6)
+    (note re sostenido -6)
     (note mi bemol -6)
     (note mi natural -5)
     (note fa natural -4)
@@ -26,6 +26,31 @@
     (alter natural "")
     (alter sostenido "♯")
     (alter bemol "♭")
+)
+
+; Intervalos
+
+(deffacts intervals "Intervalos"
+    (interval 0 "unísona (Perfecta)")
+    (interval 1 "segunda menor")
+    (interval 2 "segunda mayor")
+    (interval 3 "tercera menor")
+    (interval 4 "tercera mayor")
+    (interval 5 "cuarta (Perfecta)")
+    (interval 6 "cuarta (Aumentada)")
+    (interval 7 "quinta (Perfecta)")
+    (interval 8 "sexta menor")
+    (interval 9 "sexta mayor")
+    (interval 10 "séptima menor")
+    (interval 11 "séptima mayor")
+    (interval 12 "octava (Perfecta)")
+)
+
+; Conversiones
+
+(deffacts convertions "Conversiones"
+    (convert TRUE 1)
+    (convert FALSE 0)
 )
 
 ; Menú principal
@@ -80,7 +105,7 @@
     "   Alteraciones: natural, sostenido, bemol." crlf
     "   Octava: número entero entre 0 y 8." crlf crlf
     "Por favor, ingrese la nota a la cual desea obtener su frecuencia " crlf 
-    "(sin los paréntesis cuadrados):")
+    "(sin los paréntesis cuadrados): ")
     (bind ?input (readline))
     (assert-string (str-cat "(what_frequency " ?input ")"))
     (printout t crlf 
@@ -114,4 +139,56 @@
     (printout t crlf "¡Error: La sintaxis es incorrecta!")
     (retract ?mode ?operation)
     (assert (mode 1))
+)
+
+; Modo 2 (Intervalos)
+
+(defrule mode_2_ask_note_1 "Solicitud de primer nota"
+    (mode 2)
+    =>
+    (printout t crlf
+    "Las notas musicales pueden ser representadas de la siguiente forma: " crlf
+    "   -> <nota> <alteracion> <octava> (Ej: la natural 4)" crlf crlf
+    "   Notas: do, re, mi, fa, sol, la, si." crlf
+    "   Alteraciones: natural, sostenido, bemol." crlf
+    "   Octava: número entero entre 0 y 8." crlf crlf
+    "Por favor, ingrese la primer nota (sin los paréntesis cuadrados): ")
+    (bind ?input (readline))
+    (assert-string (str-cat "(what_interval_1 " ?input ")"))
+)
+
+; Nota intervalo (Modo 2)
+
+(defrule mode_2_ask_note_2 "Solicitud de segunda nota"
+    (mode 2)
+    (what_interval_1 $?)
+    =>
+    (printout t crlf
+    "Ahora, ingrese la nota a la cual desea obtener el intervalo" crlf 
+    "en relación con la primer nota: ")
+    (bind ?input (readline))
+    (assert-string (str-cat "(what_interval_2 " ?input ")"))
+    (printout t crlf 
+    "------------------------------------------------------------------------------------------" crlf)
+)
+
+; Análisis de intervalo (Modo 2)
+
+(defrule mode_2_compute_interval "Análisis de intervalo"
+    ?mode <- (mode 2)
+    ?input1 <- (what_interval_1 ?note1 ?alter1 ?octave1)
+    ?input2 <- (what_interval_2 ?note2 ?alter2 ?octave2)
+    (note ?note1 ?alter1 ?order1)
+    (note ?note2 ?alter2 ?order2) 
+    (alter ?alter1 ?alter_symbol1)
+    (alter ?alter2 ?alter_symbol2)
+    (convert ?symbol&:(eq ?symbol (< ?order2 ?order1)) ?conver)
+    (interval ?x&:(= ?x (+ (- ?order2 ?order1) (* 12 ?conver))) ?interv)
+    =>
+    (printout t crlf
+    "A partir de " ?note1 ?alter_symbol1 ?octave1 
+    ", la nota " ?note2 ?alter_symbol2 ?octave2
+    " corresponde a una " ?interv "." crlf crlf
+    "------------------------------------------------------------------------------------------" crlf)
+    (retract ?mode ?input1 ?input2)
 )
