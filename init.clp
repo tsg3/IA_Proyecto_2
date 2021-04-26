@@ -53,6 +53,19 @@
     (convert FALSE 0)
 )
 
+; Escalas musicales
+
+(deffacts music_scales "Escala musicales"
+    (scale "major" 2 4 5 7 9 11)
+)
+
+; Obtener índice de nota absoluto
+
+(deffunction note_index "Obtener índice de nota absoluto"
+    (?base ?extra)
+    (- (mod (+ (+ ?base 9) ?extra) 12) 9)
+)
+
 ; Menú principal
 
 (defrule MAIN::main_menu "Menú principal" 
@@ -194,4 +207,56 @@
     " corresponde a una " ?interv "." crlf crlf
     "------------------------------------------------------------------------------------------" crlf)
     (retract ?mode ?input1 ?input2)
+)
+
+; Modo 4 (Escalas Mayores)
+
+(defrule mode_4_ask_scale "Solicitud de escalas mayor"
+    (mode 4)
+    =>
+    (printout t crlf
+    "Las notas musicales para una escala pueden ser representadas de la siguiente forma: " crlf
+    "   -> <nota> <alteracion> (Ej: do natural)" crlf crlf
+    "   Notas: do, re, mi, fa, sol, la, si." crlf
+    "   Alteraciones: natural, sostenido, bemol." crlf crlf
+    "Por favor, ingrese la nota raíz de la escala que desea saber" crlf 
+    "(sin los paréntesis cuadrados): ")
+    (bind ?input (readline))
+    (assert-string (str-cat "(what_major_scale " ?input ")"))
+    (printout t crlf 
+    "------------------------------------------------------------------------------------------" crlf)
+)
+
+; Obtener escala mayor (Modo 4)
+
+(defrule mode_4_compute_scale "Obtener escala mayor"
+    ?mode <- (mode 4)
+    ?req <- (what_major_scale ?note1 ?alter1)
+    (note ?note1 ?alter1 ?order1)
+    (alter ?alter1 ?alter_symbol1)
+    (scale "major" ?tones2 ?tones3 ?tones4 ?tones5 ?tones6 ?tones7)
+    (note ?note2 ?alter2 ?index2&:(eq ?index2 (note_index ?order1 ?tones2)))
+    (alter ?alter2 ?alter_symbol2)
+    (note ?note3 ?alter3 ?index3&:(eq ?index3 (note_index ?order1 ?tones3)))
+    (alter ?alter3 ?alter_symbol3)
+    (note ?note4 ?alter4 ?index4&:(eq ?index4 (note_index ?order1 ?tones4)))
+    (alter ?alter4 ?alter_symbol4)
+    (note ?note5 ?alter5 ?index5&:(eq ?index5 (note_index ?order1 ?tones5)))
+    (alter ?alter5 ?alter_symbol5)
+    (note ?note6 ?alter6 ?index6&:(eq ?index6 (note_index ?order1 ?tones6)))
+    (alter ?alter6 ?alter_symbol6)
+    (note ?note7 ?alter7 ?index7&:(eq ?index7 (note_index ?order1 ?tones7)))
+    (alter ?alter7 ?alter_symbol7)
+    =>
+    (printout t crlf "La escala mayor de la nota " ?note1 ?alter_symbol1
+    " es la siguiente: " 
+    ?note1 ?alter_symbol1 " "
+    ?note2 ?alter_symbol2 " "
+    ?note3 ?alter_symbol3 " "
+    ?note4 ?alter_symbol4 " "
+    ?note5 ?alter_symbol5 " "
+    ?note6 ?alter_symbol6 " "
+    ?note7 ?alter_symbol7 "." crlf crlf
+    "------------------------------------------------------------------------------------------" crlf)
+    (retract ?mode ?req)
 )
