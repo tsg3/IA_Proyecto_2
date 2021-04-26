@@ -182,7 +182,10 @@
     (note ?note2 ?alter2 ?order2) 
     (alter ?alter1 ?alter_symbol1)
     (alter ?alter2 ?alter_symbol2)
-    (convert ?symbol&:(eq ?symbol (< ?order2 ?order1)) ?conver)
+    (convert ?symbol&:(eq ?symbol 
+        (or (< ?order2 ?order1) 
+            (and (neq ?octave1 ?octave2) 
+                (and (eq ?note1 ?note2) (eq ?alter1 ?alter2))))) ?conver)
     (interval ?x&:(= ?x (+ (- ?order2 ?order1) (* 12 ?conver))) ?interv)
     =>
     (printout t crlf
