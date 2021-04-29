@@ -31,19 +31,19 @@
 ; Intervalos
 
 (deffacts intervals "Intervalos"
-    (interval 0 "unísona (Perfecta)")
+    (interval 0 "unísona (perfecta)")
     (interval 1 "segunda menor")
     (interval 2 "segunda mayor")
     (interval 3 "tercera menor")
     (interval 4 "tercera mayor")
-    (interval 5 "cuarta (Perfecta)")
-    (interval 6 "cuarta (Aumentada)")
-    (interval 7 "quinta (Perfecta)")
+    (interval 5 "cuarta (perfecta)")
+    (interval 6 "cuarta (aumentada)")
+    (interval 7 "quinta (perfecta)")
     (interval 8 "sexta menor")
     (interval 9 "sexta mayor")
     (interval 10 "séptima menor")
     (interval 11 "séptima mayor")
-    (interval 12 "octava (Perfecta)")
+    (interval 12 "octava (perfecta)")
 )
 
 ; Direcciones
@@ -195,7 +195,7 @@
 ; Análisis de intervalo (Caso unísono) (Modo 2)
 
 (defrule mode_2_compute_interval_unisone "Análisis de intervalo (Caso unísono)"
-    (declare (salience 1))
+    (declare (salience 2))
     ?mode <- (mode 2)
     ?input1 <- (what_interval_1 ?note1 ?alter1 ?octave1)
     ?input2 <- (what_interval_2 ?note2 ?alter2 ?octave2)
@@ -211,6 +211,32 @@
     "A partir de " ?note1 ?alter_symbol1 ?octave1 
     ", la nota " ?note2 ?alter_symbol2 ?octave2
     " corresponde a una " ?interv "." crlf crlf
+    "------------------------------------------------------------------------------------------" crlf)
+    (retract ?mode ?input1 ?input2)
+)
+
+; Análisis de intervalo (Caso octavas) (Modo 2)
+
+(defrule mode_2_compute_interval_unisone "Análisis de intervalo (Caso octavas)"
+    (declare (salience 1))
+    ?mode <- (mode 2)
+    ?input1 <- (what_interval_1 ?note1 ?alter1 ?octave1)
+    ?input2 <- (what_interval_2 ?note2 ?alter2 ?octave2)
+    (note ?note1 ?alter1 ?order1)
+    (note ?note2 ?alter2 ?order2) 
+    (alter ?alter1 ?alter_symbol1)
+    (alter ?alter2 ?alter_symbol2)
+    (test (and (eq ?note1 ?note2) (eq ?alter1 ?alter2)))
+    (test (= (abs (- ?octave2 ?octave1)) 1))
+    (convert ?symbol2&:(eq ?symbol2
+        (> (- ?octave2 ?octave1) 0)) ?direc)
+    (interval 12 ?interv)
+    (direction ?direc ?direc_text)
+    =>
+    (printout t crlf
+    "A partir de " ?note1 ?alter_symbol1 ?octave1 
+    ", la nota " ?note2 ?alter_symbol2 ?octave2
+    " corresponde a una " ?interv " " ?direc_text "." crlf crlf
     "------------------------------------------------------------------------------------------" crlf)
     (retract ?mode ?input1 ?input2)
 )
