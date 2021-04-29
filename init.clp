@@ -46,6 +46,13 @@
     (interval 12 "octava (Perfecta)")
 )
 
+; Direcciones
+
+(deffacts directions "Direcciones"
+    (direction 1 "superior")
+    (direction 0 "inferior")
+)
+
 ; Conversiones
 
 (deffacts convertions "Conversiones"
@@ -185,9 +192,10 @@
     "------------------------------------------------------------------------------------------" crlf)
 )
 
-; Análisis de intervalo (Modo 2)
+; Análisis de intervalo (Caso unísono) (Modo 2)
 
-(defrule mode_2_compute_interval "Análisis de intervalo"
+(defrule mode_2_compute_interval_unisone "Análisis de intervalo (Caso unísono)"
+    (declare (salience 1))
     ?mode <- (mode 2)
     ?input1 <- (what_interval_1 ?note1 ?alter1 ?octave1)
     ?input2 <- (what_interval_2 ?note2 ?alter2 ?octave2)
@@ -195,16 +203,49 @@
     (note ?note2 ?alter2 ?order2) 
     (alter ?alter1 ?alter_symbol1)
     (alter ?alter2 ?alter_symbol2)
-    (convert ?symbol&:(eq ?symbol 
-        (or (< ?order2 ?order1) 
-            (and (neq ?octave1 ?octave2) 
-                (and (eq ?note1 ?note2) (eq ?alter1 ?alter2))))) ?conver)
-    (interval ?x&:(= ?x (+ (- ?order2 ?order1) (* 12 ?conver))) ?interv)
+    (test (and (eq ?octave1 ?octave2) 
+        (and (eq ?note1 ?note2) (eq ?alter1 ?alter2))))
+    (interval 0 ?interv)
     =>
     (printout t crlf
     "A partir de " ?note1 ?alter_symbol1 ?octave1 
     ", la nota " ?note2 ?alter_symbol2 ?octave2
     " corresponde a una " ?interv "." crlf crlf
+    "------------------------------------------------------------------------------------------" crlf)
+    (retract ?mode ?input1 ?input2)
+)
+
+; Análisis de intervalo (inmediatamente superior o inferior) (Modo 2)
+
+(defrule mode_2_compute_interval "Análisis de intervalo (inmediatamente superior o inferior)"
+    (declare (salience 0))
+    ?mode <- (mode 2)
+    ?input1 <- (what_interval_1 ?note1 ?alter1 ?octave1)
+    ?input2 <- (what_interval_2 ?note2 ?alter2 ?octave2)
+    (note ?note1 ?alter1 ?order1)
+    (note ?note2 ?alter2 ?order2) 
+    (alter ?alter1 ?alter_symbol1)
+    (alter ?alter2 ?alter_symbol2)
+    (test (not (and (eq ?note1 ?note2) (eq ?alter1 ?alter2))))
+    (convert ?symbol1&:(eq ?symbol1 
+        (or (and (< ?order2 ?order1) (> ?octave2 ?octave1))
+            (and (> ?order2 ?order1) (< ?octave2 ?octave1)))) ?conver)
+    (convert ?symbol2&:(eq ?symbol2 
+        (or (and (< ?order2 ?order1) (= ?octave2 ?octave1))
+            (< ?octave2 ?octave1))) ?direc_1)
+    (convert ?symbol3&:(eq ?symbol3
+        (and (> ?order2 ?order1) (< ?octave2 ?octave1))) ?direc_2)
+    (interval ?x&:(= ?x 
+        (* (+ 1 (* -2 ?direc_1)) 
+            (+ (- ?order2 ?order1) 
+                (* (+ 1 (* -2 ?direc_1)) 
+                    (* 12 ?conver))))) ?interv)
+    (direction ~?direc_1 ?direc_text)
+    =>
+    (printout t crlf
+    "A partir de " ?note1 ?alter_symbol1 ?octave1 
+    ", la nota " ?note2 ?alter_symbol2 ?octave2
+    " corresponde a una " ?interv " " ?direc_text "." crlf crlf
     "------------------------------------------------------------------------------------------" crlf)
     (retract ?mode ?input1 ?input2)
 )
