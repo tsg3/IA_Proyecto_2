@@ -195,7 +195,7 @@
 ; Análisis de intervalo (Caso unísono) (Modo 2)
 
 (defrule mode_2_compute_interval_unisone "Análisis de intervalo (Caso unísono)"
-    (declare (salience 2))
+    (declare (salience 3))
     ?mode <- (mode 2)
     ?input1 <- (what_interval_1 ?note1 ?alter1 ?octave1)
     ?input2 <- (what_interval_2 ?note2 ?alter2 ?octave2)
@@ -217,8 +217,8 @@
 
 ; Análisis de intervalo (Caso octavas) (Modo 2)
 
-(defrule mode_2_compute_interval_unisone "Análisis de intervalo (Caso octavas)"
-    (declare (salience 1))
+(defrule mode_2_compute_interval_octave "Análisis de intervalo (Caso octavas)"
+    (declare (salience 2))
     ?mode <- (mode 2)
     ?input1 <- (what_interval_1 ?note1 ?alter1 ?octave1)
     ?input2 <- (what_interval_2 ?note2 ?alter2 ?octave2)
@@ -228,8 +228,7 @@
     (alter ?alter2 ?alter_symbol2)
     (test (and (eq ?note1 ?note2) (eq ?alter1 ?alter2)))
     (test (= (abs (- ?octave2 ?octave1)) 1))
-    (convert ?symbol2&:(eq ?symbol2
-        (> (- ?octave2 ?octave1) 0)) ?direc)
+    (convert ?symbol&:(eq ?symbol (> ?octave2 ?octave1)) ?direc)
     (interval 12 ?interv)
     (direction ?direc ?direc_text)
     =>
@@ -237,6 +236,33 @@
     "A partir de " ?note1 ?alter_symbol1 ?octave1 
     ", la nota " ?note2 ?alter_symbol2 ?octave2
     " corresponde a una " ?interv " " ?direc_text "." crlf crlf
+    "------------------------------------------------------------------------------------------" crlf)
+    (retract ?mode ?input1 ?input2)
+)
+
+; Análisis de intervalo (Caso compuestos) (Modo 2)
+
+(defrule mode_2_compute_interval_compose "Análisis de intervalo (Caso compuestos)"
+    (declare (salience 1))
+    ?mode <- (mode 2)
+    ?input1 <- (what_interval_1 ?note1 ?alter1 ?octave1)
+    ?input2 <- (what_interval_2 ?note2 ?alter2 ?octave2)
+    (note ?note1 ?alter1 ?order1)
+    (note ?note2 ?alter2 ?order2) 
+    (alter ?alter1 ?alter_symbol1)
+    (alter ?alter2 ?alter_symbol2)
+    (test (or (>= (abs (- ?octave2 ?octave1)) 2)
+        (or (and (= (- ?octave2 ?octave1) 1) 
+                (> ?order2 ?order1))
+            (and (= (- ?octave2 ?octave1) -1) 
+                (< ?order2 ?order1)))))
+    (convert ?symbol&:(eq ?symbol (> ?octave2 ?octave1)) ?direc)
+    (direction ?direc ?direc_text)
+    =>
+    (printout t crlf
+    "A partir de " ?note1 ?alter_symbol1 ?octave1 
+    ", la nota " ?note2 ?alter_symbol2 ?octave2
+    " corresponde a un intervalo compuesto " ?direc_text "." crlf crlf
     "------------------------------------------------------------------------------------------" crlf)
     (retract ?mode ?input1 ?input2)
 )
@@ -252,7 +278,6 @@
     (note ?note2 ?alter2 ?order2) 
     (alter ?alter1 ?alter_symbol1)
     (alter ?alter2 ?alter_symbol2)
-    (test (not (and (eq ?note1 ?note2) (eq ?alter1 ?alter2))))
     (convert ?symbol1&:(eq ?symbol1 
         (or (and (< ?order2 ?order1) (> ?octave2 ?octave1))
             (and (> ?order2 ?order1) (< ?octave2 ?octave1)))) ?conver)
