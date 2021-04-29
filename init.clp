@@ -31,26 +31,26 @@
 ; Intervalos
 
 (deffacts intervals "Intervalos"
-    (interval 0 "unísona (perfecta)")
-    (interval 1 "segunda menor")
-    (interval 2 "segunda mayor")
-    (interval 3 "tercera menor")
-    (interval 4 "tercera mayor")
-    (interval 5 "cuarta (perfecta)")
-    (interval 6 "cuarta (aumentada)")
-    (interval 7 "quinta (perfecta)")
-    (interval 8 "sexta menor")
-    (interval 9 "sexta mayor")
-    (interval 10 "séptima menor")
-    (interval 11 "séptima mayor")
-    (interval 12 "octava (perfecta)")
+    (interval 0 unisona perfecta)
+    (interval 1 segunda menor)
+    (interval 2 segunda mayor)
+    (interval 3 tercera menor)
+    (interval 4 tercera mayor)
+    (interval 5 cuarta perfecta)
+    (interval 6 cuarta aumentada)
+    (interval 7 quinta perfecta)
+    (interval 8 sexta menor)
+    (interval 9 sexta mayor)
+    (interval 10 septima menor)
+    (interval 11 septima mayor)
+    (interval 12 octava perfecta)
 )
 
 ; Direcciones
 
 (deffacts directions "Direcciones"
-    (direction 1 "superior")
-    (direction 0 "inferior")
+    (direction 1 superior)
+    (direction 0 inferior)
 )
 
 ; Conversiones
@@ -63,7 +63,7 @@
 ; Escalas musicales
 
 (deffacts music_scales "Escala musicales"
-    (scale "major" 2 4 5 7 9 11)
+    (scale major 2 4 5 7 9 11)
 )
 
 ; Obtener índice de nota absoluto
@@ -161,7 +161,7 @@
     (assert (mode 1))
 )
 
-; Modo 2 (Intervalos)
+; Modo 2 (Intervalo de una nota)
 
 (defrule mode_2_ask_note_1 "Solicitud de primer nota"
     (mode 2)
@@ -177,7 +177,7 @@
     (assert-string (str-cat "(what_interval_1 " ?input ")"))
 )
 
-; Nota intervalo (Modo 2)
+; Intervalo a calcular (Modo 2)
 
 (defrule mode_2_ask_note_2 "Solicitud de segunda nota"
     (mode 2)
@@ -205,12 +205,12 @@
     (alter ?alter2 ?alter_symbol2)
     (test (and (eq ?octave1 ?octave2) 
         (and (eq ?note1 ?note2) (eq ?alter1 ?alter2))))
-    (interval 0 ?interv)
+    (interval 0 ?interv_1 ?interv_2)
     =>
     (printout t crlf
     "A partir de " ?note1 ?alter_symbol1 ?octave1 
     ", la nota " ?note2 ?alter_symbol2 ?octave2
-    " corresponde a una " ?interv "." crlf crlf
+    " corresponde a una " ?interv_1 " " ?interv_2 "." crlf crlf
     "------------------------------------------------------------------------------------------" crlf)
     (retract ?mode ?input1 ?input2)
 )
@@ -229,13 +229,13 @@
     (test (and (eq ?note1 ?note2) (eq ?alter1 ?alter2)))
     (test (= (abs (- ?octave2 ?octave1)) 1))
     (convert ?symbol&:(eq ?symbol (> ?octave2 ?octave1)) ?direc)
-    (interval 12 ?interv)
+    (interval 12 ?interv_1 ?interv_2)
     (direction ?direc ?direc_text)
     =>
     (printout t crlf
     "A partir de " ?note1 ?alter_symbol1 ?octave1 
     ", la nota " ?note2 ?alter_symbol2 ?octave2
-    " corresponde a una " ?interv " " ?direc_text "." crlf crlf
+    " corresponde a una " ?interv_1 " " ?interv_2 " " ?direc_text "." crlf crlf
     "------------------------------------------------------------------------------------------" crlf)
     (retract ?mode ?input1 ?input2)
 )
@@ -290,15 +290,78 @@
         (* (+ 1 (* -2 ?direc_1)) 
             (+ (- ?order2 ?order1) 
                 (* (+ 1 (* -2 ?direc_1)) 
-                    (* 12 ?conver))))) ?interv)
+                    (* 12 ?conver))))) ?interv_1 ?interv_2)
     (direction ~?direc_1 ?direc_text)
     =>
     (printout t crlf
     "A partir de " ?note1 ?alter_symbol1 ?octave1 
     ", la nota " ?note2 ?alter_symbol2 ?octave2
-    " corresponde a una " ?interv " " ?direc_text "." crlf crlf
+    " corresponde a una " ?interv_1 " " ?interv_2 " " ?direc_text "." crlf crlf
     "------------------------------------------------------------------------------------------" crlf)
     (retract ?mode ?input1 ?input2)
+)
+
+; Modo 3 (Nota de un intervalo)
+
+(defrule mode_3_ask_note "Solicitud de nota"
+    (mode 3)
+    =>
+    (printout t crlf
+    "Las notas musicales pueden ser representadas de la siguiente forma: " crlf
+    "   -> <nota> <alteracion> <octava> (Ej: la natural 4)" crlf crlf
+    "   Notas: do, re, mi, fa, sol, la, si." crlf
+    "   Alteraciones: natural, sostenido, bemol." crlf
+    "   Octava: número entero entre 0 y 8." crlf crlf
+    "Por favor, ingrese la primer nota (sin los paréntesis cuadrados): ")
+    (bind ?input (readline))
+    (assert-string (str-cat "(what_note_1 " ?input ")"))
+)
+
+; Nota a calcular (Modo 3)
+
+(defrule mode_3_ask_interval "Solicitud de intervalo"
+    (mode 3)
+    (what_note_1 $?)
+    =>
+    (printout t crlf
+    "Los intervalos se pueden escribir de la siguiente manera:" crlf
+    "   -> <intervalo> <clase> (Ej: tercera mayor superior)" crlf crlf
+    "   Intervalos: unisona, segunda, tercera, cuarta, quinta, sexta, septima, octava." crlf
+    "   Clases: menor, mayor, aumentada, perfecta." crlf
+    "   Dirección: inferior, superior." crlf crlf
+    "Ahora, ingrese el intervalo al que desea obtener su nota: ")
+    (bind ?input (readline))
+    (assert-string (str-cat "(what_note_2 " ?input ")"))
+    (printout t crlf 
+    "------------------------------------------------------------------------------------------" crlf)
+)
+
+; Calcular nota (Modo 3)
+
+(defrule mode_3_compute_note "Calcular nota"
+    ?mode <- (mode 3)
+    ?note_input <- (what_note_1 ?note1 ?alter1 ?octave1)
+    ?interv_input <- (what_note_2 ?interv ?quality ?direc)
+    (note ?note1 ?alter1 ?index1)
+    (alter ?alter1 ?alter1_text)
+    (interval ?offset ?interv ?quality)
+    (direction ?value ?direc)
+    (convert ?symbol1&:(eq ?symbol1 
+        (and (= ?value 1) (> (+ ?index1 ?offset) 2))) ?gt2)
+    (convert ?symbol2&:(eq ?symbol2 
+        (and (= ?value 0) (< (- ?index1 ?offset) -9))) ?lt_9)        
+    (note ?note2 ?alter2 ?index2&:(= ?index2 
+        (+ ?index1 
+            (+ (* (- (* 2 ?value) 1) ?offset) 
+                (* 12 (+ (* -1 ?gt2) ?lt_9))))))
+    (alter ?alter2 ?alter2_text)
+    =>
+    (printout t crlf
+    "A partir de " ?note1 ?alter1_text ?octave1 
+    ", la " ?interv " " ?quality " " ?direc
+    " corresponde a " ?note2 ?alter2_text (+ ?octave1 (+ (* -1 ?lt_9) ?gt2))  "." crlf crlf
+    "------------------------------------------------------------------------------------------" crlf)
+    (retract ?mode ?note_input ?interv_input)
 )
 
 ; Modo 4 (Escalas Mayores)
@@ -326,7 +389,7 @@
     ?req <- (what_major_scale ?note1 ?alter1)
     (note ?note1 ?alter1 ?order1)
     (alter ?alter1 ?alter_symbol1)
-    (scale "major" ?tones2 ?tones3 ?tones4 ?tones5 ?tones6 ?tones7)
+    (scale major ?tones2 ?tones3 ?tones4 ?tones5 ?tones6 ?tones7)
     (note ?note2 ?alter2 ?index2&:(eq ?index2 (note_index ?order1 ?tones2)))
     (alter ?alter2 ?alter_symbol2)
     (note ?note3 ?alter3 ?index3&:(eq ?index3 (note_index ?order1 ?tones3)))
