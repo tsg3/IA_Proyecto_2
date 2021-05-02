@@ -6,11 +6,11 @@ Sistema experto en teoría musical básica. El sistema responde a solicitudes de
 
 Las funcionalidades que el sistema posee son las siguientes:
 
-1 - Cálculo de la frecuencia de una nota musical.
-2 - Cálculo del intervalo correspondiente entre dos notas musicales.
-3 - Cálculo de la nota encontrada al aumentar o disminuir una nota musical por un intervalo dado.
-4 - Cálculo de escalas musicales mayores.
-5 - Cálculo de progresiones circulares mayores.
+1. Cálculo de la frecuencia de una nota musical.
+2. Cálculo del intervalo correspondiente entre dos notas musicales.
+3. Cálculo de la nota encontrada al aumentar o disminuir una nota musical por un intervalo dado.
+4. Cálculo de escalas musicales mayores.
+5. Cálculo de progresiones circulares mayores.
 
 ## Requerimientos
 
