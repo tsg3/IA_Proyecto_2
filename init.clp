@@ -73,6 +73,19 @@
     (- (mod (+ (+ ?base 9) ?extra) 12) 9)
 )
 
+; Plantilla para las progresiones circulares
+
+(deftemplate processed_scale "Plantilla para las progresiones circulares"
+    (slot key (type SYMBOL))
+    (multislot first (type SYMBOL))
+    (multislot second (type SYMBOL))
+    (multislot third (type SYMBOL))
+    (multislot fourth (type SYMBOL))
+    (multislot fifth (type SYMBOL))
+    (multislot sixth (type SYMBOL))
+    (multislot seventh (type SYMBOL))
+)
+
 ; Menú principal
 
 (defrule MAIN::main_menu "Menú principal" 
@@ -385,22 +398,48 @@
 ; Obtener escala mayor (Modo 4)
 
 (defrule mode_4_compute_scale "Obtener escala mayor"
-    ?mode <- (mode 4)
-    ?req <- (what_major_scale ?note1 ?alter1)
+    (mode 4)
+    (what_major_scale ?note1 ?alter1)
     (note ?note1 ?alter1 ?order1)
-    (alter ?alter1 ?alter_symbol1)
     (scale major ?tones2 ?tones3 ?tones4 ?tones5 ?tones6 ?tones7)
     (note ?note2 ?alter2 ?index2&:(eq ?index2 (note_index ?order1 ?tones2)))
-    (alter ?alter2 ?alter_symbol2)
     (note ?note3 ?alter3 ?index3&:(eq ?index3 (note_index ?order1 ?tones3)))
-    (alter ?alter3 ?alter_symbol3)
     (note ?note4 ?alter4 ?index4&:(eq ?index4 (note_index ?order1 ?tones4)))
-    (alter ?alter4 ?alter_symbol4)
     (note ?note5 ?alter5 ?index5&:(eq ?index5 (note_index ?order1 ?tones5)))
-    (alter ?alter5 ?alter_symbol5)
     (note ?note6 ?alter6 ?index6&:(eq ?index6 (note_index ?order1 ?tones6)))
-    (alter ?alter6 ?alter_symbol6)
     (note ?note7 ?alter7 ?index7&:(eq ?index7 (note_index ?order1 ?tones7)))
+    =>
+    (assert 
+        (processed_scale (key major)
+            (first ?note1 ?alter1 mayor) 
+            (second ?note2 ?alter2 menor) 
+            (third ?note3 ?alter3 menor) 
+            (fourth ?note4 ?alter4 mayor) 
+            (fifth ?note5 ?alter5 mayor) 
+            (sixth ?note6 ?alter6 menor) 
+            (seventh ?note7 ?alter7 disminuido))
+    )
+)
+
+; Print de los resultados (Modo 4)
+
+(defrule mode_4_print "Print de los resultados"
+    ?mode <- (mode 4)
+    ?req <- (what_major_scale ?note1 ?alter1)
+    ?p_scale <- (processed_scale (key major)
+        (first ?note1 ?alter1 ?)
+        (second ?note2 ?alter2 ?)
+        (third ?note3 ?alter3 ?)
+        (fourth ?note4 ?alter4 ?)
+        (fifth ?note5 ?alter5 ?)
+        (sixth ?note6 ?alter6 ?)
+        (seventh ?note7 ?alter7 ?))
+    (alter ?alter1 ?alter_symbol1)
+    (alter ?alter2 ?alter_symbol2)
+    (alter ?alter3 ?alter_symbol3)
+    (alter ?alter4 ?alter_symbol4)
+    (alter ?alter5 ?alter_symbol5)
+    (alter ?alter6 ?alter_symbol6)
     (alter ?alter7 ?alter_symbol7)
     =>
     (printout t crlf "La escala mayor de la nota " ?note1 ?alter_symbol1
@@ -413,5 +452,5 @@
     ?note6 ?alter_symbol6 " "
     ?note7 ?alter_symbol7 "." crlf crlf
     "------------------------------------------------------------------------------------------" crlf)
-    (retract ?mode ?req)
+    (retract ?mode ?req ?p_scale)
 )
