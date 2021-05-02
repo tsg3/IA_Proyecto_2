@@ -86,6 +86,13 @@
     (multislot seventh (type SYMBOL))
 )
 
+; Cualidad de los acordes
+
+(deffacts chord_qualities "Cualidad de los acordes"
+    (quality major "")
+    (quality minor "ₘ")
+)
+
 ; Menú principal
 
 (defrule MAIN::main_menu "Menú principal" 
@@ -398,7 +405,7 @@
 ; Obtener escala mayor (Modo 4)
 
 (defrule mode_4_compute_scale "Obtener escala mayor"
-    (mode 4)
+    (mode 4|5)
     (what_major_scale ?note1 ?alter1)
     (note ?note1 ?alter1 ?order1)
     (scale major ?tones2 ?tones3 ?tones4 ?tones5 ?tones6 ?tones7)
@@ -411,13 +418,13 @@
     =>
     (assert 
         (processed_scale (key major)
-            (first ?note1 ?alter1 mayor) 
-            (second ?note2 ?alter2 menor) 
-            (third ?note3 ?alter3 menor) 
-            (fourth ?note4 ?alter4 mayor) 
-            (fifth ?note5 ?alter5 mayor) 
-            (sixth ?note6 ?alter6 menor) 
-            (seventh ?note7 ?alter7 disminuido))
+            (first ?note1 ?alter1 major) 
+            (second ?note2 ?alter2 minor) 
+            (third ?note3 ?alter3 minor) 
+            (fourth ?note4 ?alter4 major) 
+            (fifth ?note5 ?alter5 major) 
+            (sixth ?note6 ?alter6 minor) 
+            (seventh ?note7 ?alter7 diminished))
     )
 )
 
@@ -451,6 +458,57 @@
     ?note5 ?alter_symbol5 " "
     ?note6 ?alter_symbol6 " "
     ?note7 ?alter_symbol7 "." crlf crlf
+    "------------------------------------------------------------------------------------------" crlf)
+    (retract ?mode ?req ?p_scale)
+)
+
+; Modo 5 (Progresiones circulares)
+
+(defrule mode_5_ask_scale "Solicitud de tónica"
+    (mode 5)
+    =>
+    (printout t crlf
+    "Las notas musicales para una escala (con la cual se determina una progresión de acordes)" crlf 
+    "pueden ser representadas de la siguiente forma: " crlf
+    "   -> <nota> <alteracion> (Ej: do natural)" crlf crlf
+    "   Notas: do, re, mi, fa, sol, la, si." crlf
+    "   Alteraciones: natural, sostenido, bemol." crlf crlf
+    "Por favor, ingrese la tónica de la que desea saber su progresión circular" crlf 
+    "(sin los paréntesis cuadrados): ")
+    (bind ?input (readline))
+    (assert-string (str-cat "(what_major_scale " ?input ")"))
+    (printout t crlf 
+    "------------------------------------------------------------------------------------------" crlf)
+)
+
+; Obtener progresión circular (Modo 5)
+
+(defrule mode_5_progression "Obtener progresión circular"
+    ?mode <- (mode 5)
+    ?req <- (what_major_scale ?chord1 ?alter1)
+    ?p_scale <- (processed_scale (key major)
+        (first ?chord1 ?alter1 ?quality1)
+        (second ?chord2 ?alter2 ?quality2)
+        (third $?)
+        (fourth $?)
+        (fifth ?chord5 ?alter5 ?quality5)
+        (sixth ?chord6 ?alter6 ?quality6)
+        (seventh $?))
+    (alter ?alter1 ?alter_symbol1)
+    (quality ?quality1 ?quality_text1)
+    (alter ?alter2 ?alter_symbol2)
+    (quality ?quality2 ?quality_text2)
+    (alter ?alter5 ?alter_symbol5)
+    (quality ?quality5 ?quality_text5)
+    (alter ?alter6 ?alter_symbol6)
+    (quality ?quality6 ?quality_text6)
+    =>
+    (printout t crlf "La progresión circular (círculo armónico) de la nota " ?chord1 ?alter_symbol1
+    " es: " 
+    ?chord6 ?alter_symbol6 ?quality_text6 " -> "
+    ?chord2 ?alter_symbol2 ?quality_text2 " -> "
+    ?chord5 ?alter_symbol5 ?quality_text5 " -> "
+    ?chord1 ?alter_symbol1 ?quality_text1 "." crlf crlf
     "------------------------------------------------------------------------------------------" crlf)
     (retract ?mode ?req ?p_scale)
 )
