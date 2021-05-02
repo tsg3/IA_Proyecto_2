@@ -1,3 +1,5 @@
+; Hechos
+
 ; Notas Musicales
 
 (deffacts notes "Notas musicales con su grado de frecuencia"
@@ -66,12 +68,23 @@
     (scale major 2 4 5 7 9 11)
 )
 
+; Funciones
+
 ; Obtener índice de nota absoluto
 
 (deffunction note_index "Obtener índice de nota absoluto"
     (?base ?extra)
     (- (mod (+ (+ ?base 9) ?extra) 12) 9)
 )
+
+; Cualidad de los acordes
+
+(deffacts chord_qualities "Cualidad de los acordes"
+    (quality major "")
+    (quality minor "ₘ")
+)
+
+; Plantillas
 
 ; Plantilla para las progresiones circulares
 
@@ -86,51 +99,59 @@
     (multislot seventh (type SYMBOL))
 )
 
-; Cualidad de los acordes
+; Reglas
 
-(deffacts chord_qualities "Cualidad de los acordes"
-    (quality major "")
-    (quality minor "ₘ")
+; Inicio
+
+(defrule init_rule "Inicio"
+    (initial-fact)
+    =>
+    (assert (start menu))
+    (printout t crlf 
+    "------------------------------------------------------------------------------------------" crlf crlf 
+    "¡Bienvenido al Sistema Experto en Música (SEM)!" crlf)
 )
 
 ; Menú principal
 
-(defrule MAIN::main_menu "Menú principal" 
-    (initial-fact)
+(defrule main_menu "Menú principal" 
+    (start menu)
     => 
     (printout t crlf 
-    "¡Bienvenido al Sistema Experto en Música (SEM)!" crlf 
-    "¿Que quisiera consultar?" crlf crlf 
+    "¿Que quiere consultar?" crlf)
+    (assert (input mode))
+)
+
+; Solicitud de modo
+
+(defrule asking_mode "Solicitud de modo" 
+    (start menu)
+    ?input <- (input mode)
+    => 
+    (printout t crlf
     "   (1) Frecuencia de una nota." crlf 
     "   (2) Distancia entre dos notas." crlf 
     "   (3) Nota del intervalo de una nota." crlf 
     "   (4) Escala mayor de una nota." crlf 
-    "   (5) Progresión circular (círculo armónico) para una escala mayor." crlf crlf 
+    "   (5) Progresión circular (círculo armónico) para una escala mayor." crlf
+    "   (x) Terminar el sistema." crlf crlf 
     "Por favor, ingrese el número correspondiente a su necesidad" crlf 
     "(número entre paréntesis): ") 
     (assert (mode (read))) 
     (printout t crlf 
     "------------------------------------------------------------------------------------------" crlf)
+    (retract ?input)
 )
 
 ; Modo inválido (Menú principal)
 
-(defrule MAIN::wrong_mode "No seleccionó un modo correcto" 
-    ?option <- (mode ~1&~2&~3&~4&~5)
+(defrule wrong_mode "No seleccionó un modo correcto" 
+    ?option <- (mode ~1&~2&~3&~4&~5&~x)
     => 
     (retract ?option)
     (printout t crlf 
-    "La opción escogida no es una opción válida. Inténtelo de nuevo:" crlf
-    "   (1) Frecuencia de una nota." crlf 
-    "   (2) Distancia entre dos notas." crlf 
-    "   (3) Nota del intervalo de una nota." crlf 
-    "   (4) Escala mayor de una nota." crlf 
-    "   (5) Progresión circular (círculo armónico) para una escala mayor." crlf crlf 
-    "Por favor, ingrese el número correspondiente a su necesidad" crlf 
-    "(número entre paréntesis): ")
-    (assert (mode (read))) 
-    (printout t crlf 
-    "------------------------------------------------------------------------------------------" crlf)
+    "La opción escogida no es una opción válida. Inténtelo de nuevo:" crlf)
+    (assert (input mode))
 )
 
 ; Modo 1 (Frecuencia)
@@ -155,7 +176,7 @@
 ; Cálculo de frecuencia (Modo 1)
 
 (defrule mode_1_compute_frequency "Cálculo de frecuencia"
-    (declare (salience 4))
+    (declare (salience 1))
     ?operation <- (what_frequency ?note ?alter ?octave)
     (alter ?alter ?alter_symbol)
     (note ?note ?alter ?index_k)
@@ -167,6 +188,7 @@
     (* 440 (** (** 2 (/ 1 12)) (+ (* 12 (- ?octave 4)) ?index_k))) crlf crlf
     "------------------------------------------------------------------------------------------" crlf)
     (retract ?mode ?operation)
+    (assert (back_to menu))
 )
 
 ; Error: Sintaxis incorrecta (Modo 1)
@@ -176,7 +198,7 @@
     ?operation <- (what_frequency $?)
     ?mode <- (mode 1)
     =>
-    (printout t crlf "¡Error: La sintaxis es incorrecta!")
+    (printout t crlf "¡Error: La sintaxis es incorrecta!" crlf)
     (retract ?mode ?operation)
     (assert (mode 1))
 )
@@ -215,7 +237,7 @@
 ; Análisis de intervalo (Caso unísono) (Modo 2)
 
 (defrule mode_2_compute_interval_unisone "Análisis de intervalo (Caso unísono)"
-    (declare (salience 3))
+    (declare (salience 4))
     ?mode <- (mode 2)
     ?input1 <- (what_interval_1 ?note1 ?alter1 ?octave1)
     ?input2 <- (what_interval_2 ?note2 ?alter2 ?octave2)
@@ -233,12 +255,13 @@
     " corresponde a una " ?interv_1 " " ?interv_2 "." crlf crlf
     "------------------------------------------------------------------------------------------" crlf)
     (retract ?mode ?input1 ?input2)
+    (assert (back_to menu))
 )
 
 ; Análisis de intervalo (Caso octavas) (Modo 2)
 
 (defrule mode_2_compute_interval_octave "Análisis de intervalo (Caso octavas)"
-    (declare (salience 2))
+    (declare (salience 3))
     ?mode <- (mode 2)
     ?input1 <- (what_interval_1 ?note1 ?alter1 ?octave1)
     ?input2 <- (what_interval_2 ?note2 ?alter2 ?octave2)
@@ -258,12 +281,13 @@
     " corresponde a una " ?interv_1 " " ?interv_2 " " ?direc_text "." crlf crlf
     "------------------------------------------------------------------------------------------" crlf)
     (retract ?mode ?input1 ?input2)
+    (assert (back_to menu))
 )
 
 ; Análisis de intervalo (Caso compuestos) (Modo 2)
 
 (defrule mode_2_compute_interval_compose "Análisis de intervalo (Caso compuestos)"
-    (declare (salience 1))
+    (declare (salience 2))
     ?mode <- (mode 2)
     ?input1 <- (what_interval_1 ?note1 ?alter1 ?octave1)
     ?input2 <- (what_interval_2 ?note2 ?alter2 ?octave2)
@@ -285,12 +309,13 @@
     " corresponde a un intervalo compuesto " ?direc_text "." crlf crlf
     "------------------------------------------------------------------------------------------" crlf)
     (retract ?mode ?input1 ?input2)
+    (assert (back_to menu))
 )
 
 ; Análisis de intervalo (inmediatamente superior o inferior) (Modo 2)
 
 (defrule mode_2_compute_interval "Análisis de intervalo (inmediatamente superior o inferior)"
-    (declare (salience 0))
+    (declare (salience 1))
     ?mode <- (mode 2)
     ?input1 <- (what_interval_1 ?note1 ?alter1 ?octave1)
     ?input2 <- (what_interval_2 ?note2 ?alter2 ?octave2)
@@ -319,6 +344,20 @@
     " corresponde a una " ?interv_1 " " ?interv_2 " " ?direc_text "." crlf crlf
     "------------------------------------------------------------------------------------------" crlf)
     (retract ?mode ?input1 ?input2)
+    (assert (back_to menu))
+)
+
+; Error: Sintaxis incorrecta (Modo 2)
+
+(defrule mode_2_syntax_error "Valores ingresados erróneos"
+    (declare (salience 0))
+    ?mode <- (mode 2)
+    ?input1 <- (what_interval_1 $?)
+    ?input2 <- (what_interval_2 $?)
+    =>
+    (printout t crlf "¡Error: Los datos ingresados no son válidos. Por favor, intente de nuevo!" crlf)
+    (retract ?mode ?input1 ?input2)
+    (assert (mode 2))
 )
 
 ; Modo 3 (Nota de un intervalo)
@@ -359,6 +398,7 @@
 ; Calcular nota (Modo 3)
 
 (defrule mode_3_compute_note "Calcular nota"
+    (declare (salience 1))
     ?mode <- (mode 3)
     ?note_input <- (what_note_1 ?note1 ?alter1 ?octave1)
     ?interv_input <- (what_note_2 ?interv ?quality ?direc)
@@ -382,6 +422,20 @@
     " corresponde a " ?note2 ?alter2_text (+ ?octave1 (+ (* -1 ?lt_9) ?gt2))  "." crlf crlf
     "------------------------------------------------------------------------------------------" crlf)
     (retract ?mode ?note_input ?interv_input)
+    (assert (back_to menu))
+)
+
+; Error: Sintaxis incorrecta (Modo 3)
+
+(defrule mode_3_syntax_error "Valores ingresados erróneos"
+    (declare (salience 0))
+    ?mode <- (mode 3)
+    ?note_input <- (what_note_1 $?)
+    ?interv_input <- (what_note_2 $?)
+    =>
+    (printout t crlf "¡Error: Los datos ingresados no son válidos. Por favor, intente de nuevo!" crlf)
+    (retract ?mode ?note_input ?interv_input)
+    (assert (mode 3))
 )
 
 ; Modo 4 (Escalas Mayores)
@@ -400,13 +454,16 @@
     (assert-string (str-cat "(what_major_scale " ?input ")"))
     (printout t crlf 
     "------------------------------------------------------------------------------------------" crlf)
+    (assert (exe_single 4)) ; Verificación para que solo se ejecute una vez la regla
 )
 
 ; Obtener escala mayor (Modo 4)
 
 (defrule mode_4_compute_scale "Obtener escala mayor"
+    (declare (salience 1))
     (mode 4|5)
     (what_major_scale ?note1 ?alter1)
+    ?check_single <- (exe_single ?x)
     (note ?note1 ?alter1 ?order1)
     (scale major ?tones2 ?tones3 ?tones4 ?tones5 ?tones6 ?tones7)
     (note ?note2 ?alter2 ?index2&:(eq ?index2 (note_index ?order1 ?tones2)))
@@ -426,6 +483,7 @@
             (sixth ?note6 ?alter6 minor) 
             (seventh ?note7 ?alter7 diminished))
     )
+    (retract ?check_single)
 )
 
 ; Print de los resultados (Modo 4)
@@ -460,6 +518,7 @@
     ?note7 ?alter_symbol7 "." crlf crlf
     "------------------------------------------------------------------------------------------" crlf)
     (retract ?mode ?req ?p_scale)
+    (assert (back_to menu))
 )
 
 ; Modo 5 (Progresiones circulares)
@@ -479,6 +538,7 @@
     (assert-string (str-cat "(what_major_scale " ?input ")"))
     (printout t crlf 
     "------------------------------------------------------------------------------------------" crlf)
+    (assert (exe_single 5)) ; Verificación para que solo se ejecute una vez la regla
 )
 
 ; Obtener progresión circular (Modo 5)
@@ -511,4 +571,37 @@
     ?chord1 ?alter_symbol1 ?quality_text1 "." crlf crlf
     "------------------------------------------------------------------------------------------" crlf)
     (retract ?mode ?req ?p_scale)
+    (assert (back_to menu))
+)
+
+; Error: Sintaxis incorrecta (Modo 5)
+
+(defrule mode_4_and_5_syntax_error "Valores ingresados erróneos"
+    (declare (salience 0))
+    ?input <- (what_major_scale $?)
+    ?mode <- (mode ?x)
+    ?check_single <- (exe_single ?x)
+    =>
+    (printout t crlf "¡Error: La nota ingresada no es válida. Por favor, intente de nuevo!" crlf)
+    (retract ?mode ?input ?check_single)
+    (assert (mode ?x))
+)
+
+; Terminación del sistema
+
+(defrule finish "Terminación del sistema"
+    ?menu <- (start menu)
+    ?mode <- (mode x)
+    =>
+    (retract ?menu ?mode)
+)
+
+; Volver al menú principal
+
+(defrule return_to_menu "Volver al menú principal"
+    ?order <- (back_to menu)
+    ?menu <- (start menu)
+    =>
+    (retract ?order ?menu)
+    (assert (start menu))
 )
